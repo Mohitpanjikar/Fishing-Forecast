@@ -1,69 +1,108 @@
-# Welcome to your Lovable project
+# Fishing Forecast Guardian
 
-## Project info
+An AI-powered application to predict and help prevent illegal fishing activities based on location and time data.
 
-**URL**: https://lovable.dev/projects/77d50778-ba85-42ef-b111-7e421c81ed2f
+## Features
 
-## How can I edit this code?
+- Multiple ML model support (Random Forest, SVM, Logistic Regression, Decision Tree, KNN, Neural Network)
+- Real-time model training via API
+- Prediction endpoint for illegal fishing likelihood
+- Performance metrics tracking (accuracy, confusion matrix)
+- Cross-origin resource sharing enabled
 
-There are several ways of editing your application.
+## Data Visualization
 
-**Use Lovable**
+![Data Visualization](docs/images/data_visualization.png)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/77d50778-ba85-42ef-b111-7e421c81ed2f) and start prompting.
+*Heatmap showing illegal fishing hotspots based on geospatial data.*
 
-Changes made via Lovable will be committed automatically to this repo.
+## Model Performance
 
-**Use your preferred IDE**
+![Model Comparison](docs/images/model_comparison.png)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+*Comparison of different machine learning models for illegal fishing prediction.*
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Prediction Results
 
-Follow these steps:
+![Prediction Results](docs/images/prediction_results.png)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+*Sample prediction results for illegal fishing likelihood across various locations and times.*
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Tech Stack
 
-# Step 3: Install the necessary dependencies.
-npm i
+- **Backend**: Flask, Python
+- **ML Libraries**: scikit-learn, pandas, numpy, joblib
+- **Frontend**: [Your frontend technology here]
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## API Endpoints
+
+### Train a Model
+```
+POST /api/train
+```
+Request body:
+```json
+{
+  "model": "Random Forest",
+  "data": [
+    {"lat": 12.345, "lon": 67.890, "hour": 14, "illegal": 1},
+    {"lat": 11.345, "lon": 68.890, "hour": 8, "illegal": 0},
+    ...
+  ]
+}
 ```
 
-**Edit a file directly in GitHub**
+### Make a Prediction
+```
+POST /api/predict
+```
+Request body:
+```json
+{
+  "model": "Random Forest",
+  "lat": 12.345,
+  "lon": 67.890,
+  "hour": 14
+}
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Health Check
+```
+GET /api/health
+```
 
-**Use GitHub Codespaces**
+## Setup and Installation
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Clone the repository
+   ```
+   git clone https://github.com/yourusername/fishing-forecast-guardian.git
+   cd fishing-forecast-guardian
+   ```
 
-## What technologies are used for this project?
+2. Create a virtual environment
+   ```
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
 
-This project is built with .
+3. Install dependencies
+   ```
+   pip install -r requirements.txt
+   ```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+4. Run the API server
+   ```
+   python api/app.py
+   ```
 
-## How can I deploy this project?
+## Development
 
-Simply open [Lovable](https://lovable.dev/projects/77d50778-ba85-42ef-b111-7e421c81ed2f) and click on Share -> Publish.
+[Include development guidelines here]
 
-## I want to use a custom domain - is that possible?
+## License
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+[Specify your license]
+
+## Contributing
+
+[Include contribution guidelines]

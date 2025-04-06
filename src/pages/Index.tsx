@@ -54,19 +54,25 @@ const Index = () => {
     
     setIsTraining(true);
     setTrainedModel(null); // Reset previous model
+
+    console.log("Starting model training with data:", fishingData.length, "points");
     
     // Simulate training delay
-    setTimeout(() => {
+    setTimeout(async () => {
       try {
         // Split data into training and testing sets
         const { train, test } = splitData(fishingData);
+        console.log("Data split - training set:", train.length, "testing set:", test.length);
         
         // Prepare data for training
         const trainData = prepareTrainingData(train);
         const testData = prepareTrainingData(test);
+        console.log("Training data prepared:", trainData.X.length, "samples");
         
         // Train model
-        const result = trainModel(selectedModel, testData, modelParams);
+        console.log("Training model:", selectedModel, "with params:", modelParams);
+        const result = await trainModel(selectedModel, testData, modelParams);
+        console.log("Training complete - result:", result);
         
         const newTrainedModel: TrainedModel = {
           type: selectedModel,
@@ -82,7 +88,26 @@ const Index = () => {
           description: `${selectedModel} model trained with ${(result.accuracy * 100).toFixed(1)}% accuracy`
         });
       } catch (error) {
-        toast.error(`Model training failed: ${(error as Error).message}`);
+        console.error("Model training error:", error);
+        toast.error(`Model training failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        // Fallback to simple simulation if API fails
+        const fallbackResult = {
+          accuracy: 0.75 + Math.random() * 0.1,
+          confusionMatrix: [[70, 15], [10, 45]]
+        };
+        
+        const fallbackModel: TrainedModel = {
+          type: selectedModel,
+          accuracy: fallbackResult.accuracy,
+          confusionMatrix: fallbackResult.confusionMatrix,
+          params: modelParams
+        };
+        
+        setTrainedModel(fallbackModel);
+        setActiveTab("predict");
+        toast.warning("Used fallback model", {
+          description: "API connection failed, using simulated results"
+        });
       } finally {
         setIsTraining(false);
       }

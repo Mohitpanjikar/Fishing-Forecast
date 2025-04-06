@@ -1,5 +1,39 @@
-
 import { ModelDefinition, ModelType } from "../types";
+import { toast } from "sonner";
+
+// API URL for ML backend
+const API_BASE_URL = "http://localhost:5001/api";
+let apiAvailable = false;
+
+// Check if API is available
+const checkApiAvailability = async () => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    
+    if (response.ok) {
+      console.log("ML API is available");
+      apiAvailable = true;
+    } else {
+      console.warn("ML API returned error status");
+      apiAvailable = false;
+    }
+  } catch (error) {
+    console.warn("ML API is not available, will use fallback simulation", error);
+    apiAvailable = false;
+  }
+};
+
+// Run the check immediately
+checkApiAvailability().catch(() => {
+  console.warn("API availability check failed");
+});
 
 export const modelDefinitions: Record<ModelType, ModelDefinition> = {
   "Random Forest": {
@@ -46,13 +80,72 @@ export const modelDefinitions: Record<ModelType, ModelDefinition> = {
   }
 };
 
-// Mockup function to simulate model training
-export const trainModel = (
+// Function to train model using Python backend
+export const trainModel = async (
   model: ModelType,
   data: { X: number[][], y: number[] },
-  params: any
+  params: Record<string, unknown>
+): Promise<{ accuracy: number; confusionMatrix: number[][] }> => {
+  // If we already know API is unavailable, use fallback immediately
+  if (!apiAvailable) {
+    console.log("Using fallback training immediately (API known to be unavailable)");
+    return fallbackTrainModel(model, data);
+  }
+
+  try {
+    // Reconstruct the data in the format expected by the API
+    const trainingData = data.X.map((features, index) => ({
+      lat: features[0],
+      lon: features[1],
+      hour: features[2],
+      illegal: data.y[index]
+    }));
+
+    console.log(`Sending training request to ${API_BASE_URL}/train with ${trainingData.length} points`);
+
+    // Send request to the Python backend
+    const response = await fetch(`${API_BASE_URL}/train`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: model,
+        data: trainingData,
+      }),
+    });
+
+    console.log("API response status:", response.status);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to train model');
+    }
+
+    const result = await response.json();
+    console.log("Training result:", result);
+    
+    return {
+      accuracy: result.accuracy,
+      confusionMatrix: result.confusionMatrix
+    };
+  } catch (error) {
+    console.error('Error training model:', error);
+    // Record that API is unavailable for future calls
+    apiAvailable = false;
+    toast.error("Could not connect to ML backend, using simulation instead");
+    // Fallback to simulation if API fails
+    return fallbackTrainModel(model, data);
+  }
+};
+
+// Fallback function in case API is unavailable
+const fallbackTrainModel = (
+  model: ModelType,
+  data: { X: number[][], y: number[] }
 ): { accuracy: number; confusionMatrix: number[][] } => {
-  // Simulate model training with different accuracies based on model type
+  console.warn('Using fallback training model - API unavailable');
+  
   let baseAccuracy = 0;
   
   switch (model) {
@@ -78,11 +171,8 @@ export const trainModel = (
       baseAccuracy = 0.75;
   }
   
-  // Add random variation
   const accuracy = baseAccuracy + (Math.random() * 0.1 - 0.05);
   
-  // Create a simple confusion matrix
-  // For binary classification: [[TN, FP], [FN, TP]]
   const numSamples = data.y.length;
   const truePositives = Math.floor(numSamples * accuracy * 0.4);
   const trueNegatives = Math.floor(numSamples * accuracy * 0.6);
@@ -98,27 +188,79 @@ export const trainModel = (
   };
 };
 
-// Mockup function to predict illegal fishing
-export const predictIllegalFishing = (
+// Function to predict illegal fishing using Python backend
+export const predictIllegalFishing = async (
+  latitude: number,
+  longitude: number,
+  hour: number,
+  modelType: ModelType = "Random Forest"
+): Promise<{ result: boolean; probability: number }> => {
+  // If we already know API is unavailable, use fallback immediately
+  if (!apiAvailable) {
+    console.log("Using fallback prediction immediately (API known to be unavailable)");
+    return fallbackPrediction(latitude, longitude, hour);
+  }
+
+  try {
+    console.log(`Sending prediction request to ${API_BASE_URL}/predict for location: ${latitude}, ${longitude}`);
+
+    // Send request with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    // Send request to the Python backend
+    const response = await fetch(`${API_BASE_URL}/predict`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: modelType,
+        lat: latitude,
+        lon: longitude,
+        hour: hour
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+    console.log("API prediction response status:", response.status);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get prediction');
+    }
+
+    const prediction = await response.json();
+    console.log("Prediction result:", prediction);
+    
+    return {
+      result: prediction.result,
+      probability: prediction.probability
+    };
+  } catch (error) {
+    console.error('Error predicting illegal fishing:', error);
+    // Record that API is unavailable for future calls
+    apiAvailable = false;
+    // Fallback to simulation if API fails
+    return fallbackPrediction(latitude, longitude, hour);
+  }
+};
+
+// Fallback prediction in case API is unavailable
+const fallbackPrediction = (
   latitude: number,
   longitude: number,
   hour: number
 ): { result: boolean; probability: number } => {
-  // Simple mockup logic for prediction
-  // Real implementation would use the trained model
+  console.warn('Using fallback prediction - API unavailable');
   
-  // Distance from the equator increases likelihood (just for demo)
   const latEffect = Math.abs(latitude) / 90;
-  
-  // Hour effect - higher probability during night hours
   const hourEffect = hour >= 19 || hour <= 4 ? 0.3 : -0.1;
-  
-  // Random factor
   const randomFactor = Math.random() * 0.2;
   
-  // Calculate probability
   let probability = 0.3 + latEffect + hourEffect + randomFactor;
-  probability = Math.max(0, Math.min(1, probability)); // Ensure between 0 and 1
+  probability = Math.max(0, Math.min(1, probability));
   
   return {
     result: probability > 0.5,
