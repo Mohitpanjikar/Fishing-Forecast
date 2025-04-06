@@ -12,19 +12,19 @@ An AI-powered application to predict and help prevent illegal fishing activities
 
 ## Data Visualization
 
-![Data Visualization](docs/images/data_visualization.png)
+![Data Visualization](https://github.com/Mohitpanjikar/Fishing-Forecast/blob/main/Image/Data.png)
 
 *Heatmap showing illegal fishing hotspots based on geospatial data.*
 
 ## Model Performance
 
-![Model Comparison](docs/images/model_comparison.png)
+![Model Comparison](https://github.com/Mohitpanjikar/Fishing-Forecast/blob/main/Image/Model.png)
 
 *Comparison of different machine learning models for illegal fishing prediction.*
 
 ## Prediction Results
 
-![Prediction Results](docs/images/prediction_results.png)
+![Prediction Results](https://github.com/Mohitpanjikar/Fishing-Forecast/blob/main/Image/Result.png)
 
 *Sample prediction results for illegal fishing likelihood across various locations and times.*
 
